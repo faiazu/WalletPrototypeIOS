@@ -21,17 +21,16 @@ final class GoogleAuthViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            // 1. Google UI → ID token
+            // Google UI to ID token
             let idToken = try await GoogleAuthService.shared.signIn(presenting: viewController)
             print("✅ Google ID Token:", idToken)
 
-            // 2. Send token to your backend
-            let (user, backendToken) = try await AuthService.shared.loginWithGoogle(idToken: idToken)
-            print("✅ Backend auth token:", backendToken)
+            // Send token to backend
+            let response = try await AuthService.shared.loginWithGoogle(idToken: idToken)
+            print("✅ Backend auth token:", response.token)
 
-            // 3. Update global app state
-            appState.currentUser = user
-            appState.authToken = backendToken
+            // Update global app state
+            appState.applyLogin(response: response)
 
         } catch {
             print("❌ Sign in failed:", error)

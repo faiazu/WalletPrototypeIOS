@@ -48,7 +48,7 @@ final class GoogleAuthService {
         return idToken
     }
     
-    /// Simple helper if you want to support sign out.
+    // Simple helper to sign out.
     func signOut() {
         GIDSignIn.sharedInstance.signOut()
     }

@@ -12,20 +12,14 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if let user = appState.currentUser {
-                // Logged-in flow (placeholder for now)
-                VStack(spacing: 16) {
-                    Text("Home")
-                        .font(.largeTitle)
-                        .bold()
-                    Text("Logged in as \(user.email)")
-                }
+            if appState.currentUser != nil {
+                // Logged-in flow: show the home screen
+                HomeRootView(appState: appState)
             } else {
-                // Logged-out flow → show Google sign-in
+                // Logged-out flow: show auth screen
                 AuthRootView()
             }
         }
-        .padding()
     }
 }
 

@@ -14,16 +14,16 @@ final class AuthService {
     private let apiClient = APIClient.shared
 
     // Sends the Google ID Token to backend and returns (User, token)
-    func loginWithGoogle(idToken: String) async throws -> (User, String) {
+    func loginWithGoogle(idToken: String) async throws -> GoogleLoginResponse {
         let request = GoogleLoginRequest(idToken: idToken)
 
         let response: GoogleLoginResponse = try await apiClient.send(
             path: "/auth/google",   // backend route we'll build later
-            method: "POST",
+            method: HTTPMethod.post,
             body: request
         )
 
-        return (response.user, response.token)
+        return response
     }
 }
 
