@@ -10,6 +10,7 @@ import SwiftUI
 struct HomeRootView: View {
     @ObservedObject var appState: AppState
     @StateObject private var viewModel: HomeViewModel
+    @EnvironmentObject private var router: Router
 
     init(appState: AppState) {
         _appState = ObservedObject(wrappedValue: appState)
@@ -51,7 +52,15 @@ struct HomeRootView: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 8)
-
+            
+            
+            Button("Go to Wallet") {
+                router.goToWallet()
+            }
+            .buttonStyle(.bordered)
+            .padding(.top, 8)
+            
+            
             Button("Sign out") {
                 viewModel.signOut()
             }
