@@ -13,6 +13,7 @@ final class HomeViewModel: ObservableObject {
     @Published var wallet: Wallet?
     @Published var card: Card?
     @Published var balances: Balances?
+    @Published var state: ScreenState = .idle
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -72,12 +73,14 @@ final class HomeViewModel: ObservableObject {
         Task {
             isLoading = true
             errorMessage = nil
+            state = .loading(message: "Loading your wallet...")
 
             defer { isLoading = false }
 
             do {
                 let bootstrap = try await walletService.bootstrap()
                 apply(bootstrap)
+                state = .loaded
 
             } catch {
                 if Task.isCancelled { return }
@@ -104,6 +107,7 @@ final class HomeViewModel: ObservableObject {
             case let .serverError(status, body):
                 if status == 401 || status == 403 {
                     errorMessage = "Session expired. Please sign in again."
+                    state = .error(message: errorMessage ?? "Session expired.")
                     appState.signOut()
                     return false
                 }
@@ -113,29 +117,20 @@ final class HomeViewModel: ObservableObject {
                     return await retryFreshLoginAndBootstrap()
                 }
 
-                errorMessage = parsedServerMessage(from: body) ?? apiError.localizedDescription
+                errorMessage = ErrorMessageMapper.parsedServerMessage(from: body) ?? apiError.localizedDescription
+                state = .error(message: errorMessage ?? apiError.localizedDescription)
                 return false
 
             default:
                 errorMessage = apiError.localizedDescription
+                state = .error(message: errorMessage ?? apiError.localizedDescription)
                 return false
             }
         }
 
         errorMessage = error.localizedDescription
+        state = .error(message: errorMessage ?? error.localizedDescription)
         return false
-    }
-
-    private func parsedServerMessage(from body: String?) -> String? {
-        guard let body, !body.isEmpty else { return nil }
-
-        if let data = body.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let message = json["error"] as? String {
-            return message
-        }
-
-        return body
     }
 
     private func isUserNotFound(_ body: String?) -> Bool {
@@ -152,20 +147,17 @@ final class HomeViewModel: ObservableObject {
             let bootstrap = try await walletService.bootstrap()
             apply(bootstrap)
             errorMessage = nil
+            state = .loaded
             return true
         } catch {
             errorMessage = "Session reset. Please try signing in again."
+            state = .error(message: errorMessage ?? "Session reset.")
             appState.signOut()
             return false
         }
     }
 
     private func formatCurrency(_ amount: Double?) -> String {
-        guard let amount else { return "—" }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: amount)) ?? "\(amount)"
+        return CurrencyFormatter.string(from: amount)
     }
 }

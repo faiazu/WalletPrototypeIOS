@@ -13,3 +13,6 @@ build/
 
 # CocoaPods (if ever use)
 Pods/
+
+# Backend API documentation
+api.md

@@ -10,6 +10,7 @@ import UIKit
 
 @MainActor
 final class AuthViewModel: ObservableObject {
+    @Published var state: ScreenState = .idle
     @Published var isLoading = false
     @Published var statusMessage: String?
     @Published var errorMessage: String?
@@ -30,6 +31,7 @@ final class AuthViewModel: ObservableObject {
 
         errorMessage = nil
         statusMessage = "Signing you in..."
+        state = .loading(message: statusMessage)
         isLoading = true
 
         do {
@@ -42,6 +44,7 @@ final class AuthViewModel: ObservableObject {
             appState.applyBootstrap(bootstrap)
 
             statusMessage = nil
+            state = .loaded
             isLoading = false
         } catch {
             handleAuthError(error, appState: appState)
@@ -57,6 +60,7 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         statusMessage = "Connecting to Google..."
+        state = .loading(message: statusMessage)
 
         do {
             let idToken = try await GoogleAuthService.shared.signIn(presenting: viewController)
@@ -69,6 +73,7 @@ final class AuthViewModel: ObservableObject {
             appState.applyBootstrap(bootstrap)
 
             statusMessage = nil
+            state = .loaded
             isLoading = false
         } catch {
             handleAuthError(error, appState: appState)
@@ -80,6 +85,7 @@ final class AuthViewModel: ObservableObject {
 private extension AuthViewModel {
     func handleAuthError(_ error: Error, appState: AppState) {
         statusMessage = nil
+        state = .error(message: ErrorMessageMapper.message(for: error))
         isLoading = false
 
         // If login partially succeeded, clear any persisted state so user can retry cleanly.
@@ -89,27 +95,6 @@ private extension AuthViewModel {
 
         if Task.isCancelled { return }
 
-        if let apiError = error as? APIError {
-            switch apiError {
-            case let .serverError(_, body):
-                errorMessage = parsedServerMessage(from: body) ?? apiError.localizedDescription
-            default:
-                errorMessage = apiError.localizedDescription
-            }
-        } else {
-            errorMessage = error.localizedDescription
-        }
-    }
-
-    func parsedServerMessage(from body: String?) -> String? {
-        guard let body, !body.isEmpty else { return nil }
-
-        if let data = body.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let message = json["error"] as? String {
-            return message
-        }
-
-        return body
+        errorMessage = ErrorMessageMapper.message(for: error)
     }
 }

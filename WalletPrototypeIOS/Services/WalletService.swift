@@ -19,10 +19,10 @@ final class WalletService: WalletServicing {
 
     // Ensures a default wallet, membership, and card; returns dashboard-ready data.
     func bootstrap() async throws -> WalletBootstrapResponse {
-        let response: WalletBootstrapResponse = try await apiClient.send(
+        let dto: WalletBootstrapDTO = try await apiClient.send(
             path: "/wallet/bootstrap",
             method: .post
         )
-        return response
+        return dto.toDomain()
     }
 }
