@@ -61,7 +61,8 @@ private extension DashboardPlaceholderView {
                     .font(.title2.bold())
                     .foregroundStyle(.white)
 
-                Text(maskedCard(appState.card?.last4 ?? "8635"))
+                // Use the first available card's last4 if present
+                Text(maskedCard(appState.cards.first?.last4 ?? "8635"))
                     .font(.body.monospacedDigit())
                     .foregroundStyle(.white)
 

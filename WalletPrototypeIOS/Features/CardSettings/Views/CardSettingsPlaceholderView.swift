@@ -29,30 +29,16 @@ struct CardSettingsPlaceholderView: View {
 
 private extension CardSettingsPlaceholderView {
     var cardSummary: some View {
-        ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(LinearGradient(colors: [.blue, Color.cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(height: 160)
-                .shadow(radius: 6, y: 4)
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Available Balance")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.8))
-                Text(CurrencyFormatter.string(from: appState.balances?.poolDisplay ?? 4228.76))
-                    .font(.title3.bold())
-                    .foregroundStyle(.white)
-
-                Text(maskedCard(appState.card?.last4 ?? "8635"))
-                    .font(.body.monospacedDigit())
-                    .foregroundStyle(.white)
-
-                Text(appState.currentUser?.email ?? "Will Jonas")
-                    .font(.footnote.bold())
-                    .foregroundStyle(.white)
-            }
-            .padding(16)
-        }
+        CardDisplayView(
+            walletName: appState.wallet?.name ?? "Groceries",
+            balanceText: CurrencyFormatter.string(from: appState.balances?.poolDisplay ?? 0),
+            maskedNumber: maskedCard(appState.cards.first?.last4 ?? "7641"),
+            validFrom: "10/25",
+            expires: "10/30",
+            holder: displayName(for: appState.cards.first?.user ?? appState.currentUser),
+            chipImageName: "CardChipImage",
+            brandImageName: "MastercardLogo"
+        )
     }
 
     var statusRow: some View {
@@ -60,13 +46,27 @@ private extension CardSettingsPlaceholderView {
             Text("Card Status")
                 .font(.headline)
             Spacer()
-            Text(appState.card?.status ?? "Active")
+            Text(cardStatusText)
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(.green)
+                .foregroundStyle(cardStatusColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.green.opacity(0.15))
+                .background(cardStatusColor.opacity(0.15))
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    var cardStatusText: String {
+        appState.cards.first?.status ?? "Active"
+    }
+
+    var cardStatusColor: Color {
+        // Simple mapping; adjust as needed for your statuses
+        switch (appState.cards.first?.status ?? "Active").lowercased() {
+        case "active": return .green
+        case "locked": return .orange
+        case "inactive", "deactivated", "disabled": return .red
+        default: return .secondary
         }
     }
 
@@ -112,7 +112,22 @@ private extension CardSettingsPlaceholderView {
     }
 
     func maskedCard(_ last4: String) -> String {
-        return "•••• •••• •••• \(last4)"
+        return "**** **** **** \(last4)"
+    }
+
+    func displayName(for user: User?) -> String {
+        if let name = user?.name, !name.isEmpty {
+            return name
+        }
+        if let email = user?.email {
+            let base = email.split(separator: "@").first ?? Substring(email)
+            let parts = base.split(separator: ".").map { $0.capitalized }
+            if !parts.isEmpty {
+                return parts.joined(separator: " ")
+            }
+            return String(base)
+        }
+        return "Card Holder"
     }
 }
 

@@ -7,14 +7,16 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 final class AppState: ObservableObject {
     @Published var currentUser: User?
     @Published var authToken: String?
     @Published var personId: String?
     @Published var wallet: Wallet?
-    @Published var card: Card?
+    @Published var cards: [Card] = []
     @Published var balances: Balances?
+    @Published var showAuthTransition = false
 
     private let sessionStore: SessionStore
     
@@ -39,11 +41,12 @@ final class AppState: ObservableObject {
         sessionStore.save(snapshot: snapshot)
 
         APIClient.shared.setAuthToken(response.token)
+        triggerAuthTransition()
     }
 
     func applyBootstrap(_ bootstrap: WalletBootstrapResponse) {
         wallet = bootstrap.wallet
-        card = bootstrap.card
+        cards = bootstrap.cards
         balances = bootstrap.balances
     }
     
@@ -52,10 +55,20 @@ final class AppState: ObservableObject {
         authToken = nil
         personId = nil
         wallet = nil
-        card = nil
+        cards = []
         balances = nil
 
         sessionStore.clear()
         APIClient.shared.setAuthToken(nil)
+        triggerAuthTransition()
+    }
+
+    private func triggerAuthTransition() {
+        showAuthTransition = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                self?.showAuthTransition = false
+            }
+        }
     }
 }

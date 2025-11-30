@@ -12,13 +12,20 @@ struct ContentView: View {
     @EnvironmentObject var router: Router
 
     var body: some View {
-        Group {
-            if appState.currentUser != nil {
-                LoggedInShellView(appState: appState)
-                    .environmentObject(router)
-            } else {
-                // Logged-out flow: show auth screen
-                AuthRootView()
+        ZStack {
+            Group {
+                if appState.currentUser != nil {
+                    LoggedInShellView(appState: appState)
+                        .environmentObject(router)
+                } else {
+                    // Logged-out flow: show auth screen
+                    AuthRootView()
+                }
+            }
+
+            if appState.showAuthTransition {
+                BubblesOverlayView()
+                    .transition(.opacity)
             }
         }
     }

@@ -28,10 +28,10 @@ struct CardDisplayView: View {
                     .frame(height: 220)
                     .shadow(radius: 6, y: 4)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 10) {
                     Text("Available Balance")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.85))
+                        .font(.footnote)
+                        .foregroundStyle(.white.opacity(0.9))
 
                     Text(balanceText)
                         .font(.system(size: 28, weight: .bold))
@@ -41,36 +41,36 @@ struct CardDisplayView: View {
                         .font(.title3.monospacedDigit().weight(.bold))
                         .foregroundStyle(.white)
 
-                    HStack(spacing: 16) {
+                    HStack(spacing: 14) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Valid From")
-                                .font(.caption2)
+                                .font(.footnote)
                                 .foregroundStyle(.white.opacity(0.7))
                             Text(validFrom)
-                                .font(.caption.bold())
+                                .font(.subheadline.bold())
                                 .foregroundStyle(.white)
                         }
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Expires")
-                                .font(.caption2)
+                                .font(.footnote)
                                 .foregroundStyle(.white.opacity(0.7))
                             Text(expires)
-                                .font(.caption.bold())
+                                .font(.subheadline.bold())
                                 .foregroundStyle(.white)
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Card Holder")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.8))
                         Text(holder)
                             .font(.headline.bold())
                             .foregroundStyle(.white)
                     }
                 }
-                .padding(.vertical, 16)
-                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 14)
 
                 VStack(alignment: .trailing, spacing: 12) {
                     if let chip = UIImage(named: chipImageName) {

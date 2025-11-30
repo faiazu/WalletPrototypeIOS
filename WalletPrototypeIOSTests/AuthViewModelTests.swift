@@ -67,7 +67,7 @@ private final class MockWalletService: WalletServicing {
 private extension LoginResponse {
     static var fixture: LoginResponse {
         LoginResponse(
-            user: User(id: "user-123", email: "user@example.com", kycStatus: .accepted),
+            user: User(id: "user-123", email: "user@example.com", name: "Test User", kycStatus: .accepted),
             token: "token-123",
             personId: "person-123"
         )

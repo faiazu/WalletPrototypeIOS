@@ -12,8 +12,8 @@ import Combine
 final class HomeViewModel: ObservableObject {
     // Bootstrap payload the home screen depends on.
     @Published var wallet: Wallet?
-    @Published var card: Card?
     @Published var balances: Balances?
+    @Published var cards: [Card] = []
     // Unified UI state for loading/error.
     @Published var state: ScreenState = .idle
     @Published var isLoading = false
@@ -33,12 +33,12 @@ final class HomeViewModel: ObservableObject {
         self.authService = authService ?? AuthService.shared
 
         self.wallet = appState.wallet
-        self.card = appState.card
+        self.cards = appState.cards
         self.balances = appState.balances
     }
 
     var hasBootstrap: Bool {
-        wallet != nil && card != nil && balances != nil
+        wallet != nil && balances != nil
     }
 
     var poolBalanceText: String {
@@ -100,7 +100,7 @@ final class HomeViewModel: ObservableObject {
     /// Apply new bootstrap data to both VM and shared app state.
     private func apply(_ bootstrap: WalletBootstrapResponse) {
         wallet = bootstrap.wallet
-        card = bootstrap.card
+        cards = bootstrap.cards
         balances = bootstrap.balances
 
         appState.applyBootstrap(bootstrap)

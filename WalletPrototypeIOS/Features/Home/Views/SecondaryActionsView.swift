@@ -16,22 +16,22 @@ struct SecondaryActionsView: View {
             Button(action: addMoneyAction) {
                 HStack(spacing: 8) {
                     Text("💸")
-                        .font(.system(size: 28))
+                        .font(.system(size: 24))
                     Text("Add Money")
                         .font(.headline)
                 }
-                .frame(maxWidth: .infinity, minHeight: 24)
+                .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(PrimaryButtonStyle())
 
             Button(action: settingsAction) {
                 HStack(spacing: 8) {
                     Text("⚙️")
-                        .font(.system(size: 28))
+                        .font(.system(size: 24))
                     Text("Settings")
                         .font(.headline)
                 }
-                .frame(maxWidth: .infinity, minHeight: 24)
+                .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(SecondaryButtonStyle())
         }

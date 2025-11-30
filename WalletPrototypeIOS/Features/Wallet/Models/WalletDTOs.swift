@@ -10,7 +10,7 @@ import Foundation
 // API-facing DTOs
 struct WalletBootstrapDTO: Codable {
     let wallet: WalletDTO
-    let card: CardDTO
+    let cards: [CardDTO]
     let balances: BalancesDTO
 }
 
@@ -39,6 +39,7 @@ struct CardDTO: Codable {
     let providerName: String?
     let walletId: String?
     let userId: String?
+    let user: User?
 }
 
 struct BalancesDTO: Codable {
@@ -56,7 +57,7 @@ extension WalletBootstrapDTO {
     func toDomain() -> WalletBootstrapResponse {
         WalletBootstrapResponse(
             wallet: wallet.toDomain(),
-            card: card.toDomain(),
+            cards: cards.map { $0.toDomain() },
             balances: balances.toDomain()
         )
     }
@@ -96,7 +97,8 @@ extension CardDTO {
             status: status,
             providerName: providerName,
             walletId: walletId,
-            userId: userId
+            userId: userId,
+            user: user
         )
     }
 }

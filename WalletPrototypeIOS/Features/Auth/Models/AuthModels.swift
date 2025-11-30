@@ -18,4 +18,3 @@ struct LoginResponse: Codable {
     let token: String     // backend's JWT or session token
     let personId: String?
 }
-

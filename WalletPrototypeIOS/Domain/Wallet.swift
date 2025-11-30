@@ -32,6 +32,7 @@ struct Card: Codable, Equatable {
     let providerName: String?
     let walletId: String?
     let userId: String?
+    let user: User?
 
     var displayId: String {
         externalCardId ?? id ?? "card"
@@ -55,6 +56,6 @@ struct MemberEquity: Codable, Equatable {
 
 struct WalletBootstrapResponse: Codable {
     let wallet: Wallet
-    let card: Card
+    let cards: [Card]
     let balances: Balances
 }

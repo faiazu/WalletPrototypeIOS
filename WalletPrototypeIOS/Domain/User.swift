@@ -30,6 +30,7 @@ enum KYCStatus: String, Codable, Equatable {
 struct User: Identifiable, Codable, Equatable {
     let id: String
     let email: String
+    let name: String?
     let kycStatus: KYCStatus?
     // to add: name, createdAt, avatarURL, etc.
 }

@@ -26,6 +26,7 @@ final class SessionStore {
     private let tokenKey = "accessToken"
     private let userIdKey = "userId"
     private let userEmailKey = "userEmail"
+    private let userNameKey = "userName"
     private let userKycStatusKey = "userKycStatus"
     private let personIdKey = "personId"
 
@@ -38,11 +39,12 @@ final class SessionStore {
             return nil
         }
 
+        let name = userDefaults.string(forKey: userNameKey)
         let storedKyc = userDefaults.string(forKey: userKycStatusKey)
         let kycStatus = storedKyc.flatMap { KYCStatus(rawValue: $0) ?? .unknown }
         let personId = userDefaults.string(forKey: personIdKey)
 
-        let user = User(id: id, email: email, kycStatus: kycStatus)
+        let user = User(id: id, email: email, name: name, kycStatus: kycStatus)
         return SessionSnapshot(user: user, token: token, personId: personId)
     }
 
@@ -50,6 +52,7 @@ final class SessionStore {
         userDefaults.set(snapshot.token, forKey: tokenKey)
         userDefaults.set(snapshot.user.id, forKey: userIdKey)
         userDefaults.set(snapshot.user.email, forKey: userEmailKey)
+        userDefaults.set(snapshot.user.name, forKey: userNameKey)
         userDefaults.set(snapshot.user.kycStatus?.rawValue, forKey: userKycStatusKey)
         if let personId = snapshot.personId {
             userDefaults.set(personId, forKey: personIdKey)
@@ -62,6 +65,7 @@ final class SessionStore {
         userDefaults.removeObject(forKey: tokenKey)
         userDefaults.removeObject(forKey: userIdKey)
         userDefaults.removeObject(forKey: userEmailKey)
+        userDefaults.removeObject(forKey: userNameKey)
         userDefaults.removeObject(forKey: userKycStatusKey)
         userDefaults.removeObject(forKey: personIdKey)
     }
