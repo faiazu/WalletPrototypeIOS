@@ -65,8 +65,7 @@ private extension AuthRootView {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(PrimaryButtonStyle())
         .disabled(viewModel.isLoading)
         .opacity(viewModel.isLoading ? 0.9 : 1.0)
     }
@@ -78,17 +77,11 @@ private extension AuthRootView {
             }
 
             if let status = viewModel.statusMessage {
-                Text(status)
-                    .foregroundStyle(.secondary)
-                    .font(.footnote)
+                StatusBanner(text: status, style: .info)
             }
 
             if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundStyle(.red)
-                    .font(.footnote)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                StatusBanner(text: error, style: .error)
             }
         }
     }

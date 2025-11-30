@@ -10,9 +10,11 @@ import Combine
 
 @MainActor
 final class HomeViewModel: ObservableObject {
+    // Bootstrap payload the home screen depends on.
     @Published var wallet: Wallet?
     @Published var card: Card?
     @Published var balances: Balances?
+    // Unified UI state for loading/error.
     @Published var state: ScreenState = .idle
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -58,11 +60,13 @@ final class HomeViewModel: ObservableObject {
         return "—"
     }
 
+    /// Only fetch bootstrap if we don't already have it (avoids duplicate calls on appear).
     func loadIfNeeded() {
         guard !hasBootstrap else { return }
         load()
     }
 
+    /// Fetch wallet bootstrap (wallet, card, balances). Handles stale tokens gracefully.
     func load() {
         guard !isLoading else { return }
         guard appState.authToken != nil else {
@@ -93,6 +97,7 @@ final class HomeViewModel: ObservableObject {
         appState.signOut()
     }
 
+    /// Apply new bootstrap data to both VM and shared app state.
     private func apply(_ bootstrap: WalletBootstrapResponse) {
         wallet = bootstrap.wallet
         card = bootstrap.card
@@ -101,6 +106,7 @@ final class HomeViewModel: ObservableObject {
         appState.applyBootstrap(bootstrap)
     }
 
+    /// Translate API failures into user-friendly messages and handle recovery paths.
     private func handleBootstrapError(_ error: Error) async -> Bool {
         if let apiError = error as? APIError {
             switch apiError {

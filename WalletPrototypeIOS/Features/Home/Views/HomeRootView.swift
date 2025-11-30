@@ -27,10 +27,7 @@ struct HomeRootView: View {
                 }
 
                 if let error = viewModel.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .font(.footnote)
-                        .multilineTextAlignment(.leading)
+                    StatusBanner(text: error, style: .error)
                         .padding(.vertical, 4)
                 }
 
@@ -147,7 +144,7 @@ private extension HomeRootView {
             } label: {
                 Label("Refresh data", systemImage: "arrow.clockwise")
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryButtonStyle())
             .disabled(viewModel.isLoading)
 
             Button {
@@ -155,7 +152,7 @@ private extension HomeRootView {
             } label: {
                 Label("Open wallet", systemImage: "rectangle.grid.2x2")
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(SecondaryButtonStyle())
 
             Button(role: .destructive) {
                 viewModel.signOut()

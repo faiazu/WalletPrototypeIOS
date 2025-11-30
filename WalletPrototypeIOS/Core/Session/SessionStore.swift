@@ -16,9 +16,12 @@ struct SessionSnapshot {
 /// Persists and restores lightweight session info (token + user identifiers).
 final class SessionStore {
     static let shared = SessionStore()
-    private init() {}
+    /// Internal init so tests can provide an in-memory UserDefaults if needed.
+    public init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
+    }
 
-    private let userDefaults = UserDefaults.standard
+    private let userDefaults: UserDefaults
 
     private let tokenKey = "accessToken"
     private let userIdKey = "userId"

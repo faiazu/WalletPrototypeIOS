@@ -10,6 +10,7 @@ import UIKit
 
 @MainActor
 final class AuthViewModel: ObservableObject {
+    // Standardized loading/error status for the screen.
     @Published var state: ScreenState = .idle
     @Published var isLoading = false
     @Published var statusMessage: String?
@@ -26,6 +27,7 @@ final class AuthViewModel: ObservableObject {
         self.walletService = walletService ?? WalletService.shared
     }
     
+    /// Primary path: demo login + bootstrap. Keeps the button disabled until both steps finish.
     func loginAsChristopher(appState: AppState) async {
         guard !isLoading else { return }
 
@@ -51,6 +53,7 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    /// Secondary path: Google login retained for now; same bootstrap afterwards.
     func signInWithGoogle(
         presenting viewController: UIViewController,
         appState: AppState
@@ -83,6 +86,7 @@ final class AuthViewModel: ObservableObject {
 
 // MARK: - Private helpers
 private extension AuthViewModel {
+    /// Normalize errors, reset UI state, and clear any partial session so retry starts clean.
     func handleAuthError(_ error: Error, appState: AppState) {
         statusMessage = nil
         state = .error(message: ErrorMessageMapper.message(for: error))
