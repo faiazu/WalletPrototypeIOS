@@ -14,16 +14,8 @@ struct ContentView: View {
     var body: some View {
         Group {
             if appState.currentUser != nil {
-                // Logged-in flow
-                NavigationStack(path: $router.path) {
-                    HomeRootView(appState: appState)
-                        .navigationDestination(for: Route.self) { route in
-                            switch route {
-                            case .wallet:
-                                WalletRootView(appState: appState)
-                            }
-                        }
-                }
+                LoggedInShellView(appState: appState)
+                    .environmentObject(router)
             } else {
                 // Logged-out flow: show auth screen
                 AuthRootView()
@@ -37,4 +29,3 @@ struct ContentView: View {
         .environmentObject(AppState())
         .environmentObject(Router())
 }
-

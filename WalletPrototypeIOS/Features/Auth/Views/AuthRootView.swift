@@ -13,17 +13,19 @@ struct AuthRootView: View {
     @StateObject private var viewModel: AuthViewModel = AuthViewModel()
 
     var body: some View {
-        VStack(spacing: 24) {
-            header
+        ScrollView {
+            VStack(spacing: 24) {
+                heroSection
 
-            demoButton
+                demoButton
 
-            statusSection
+                statusSection
 
-            googleSection
+                googleSection
+            }
+            .padding()
+            .animation(.default, value: viewModel.isLoading)
         }
-        .padding()
-        .animation(.default, value: viewModel.isLoading)
     }
 }
 
@@ -38,6 +40,28 @@ private extension AuthRootView {
             Text("Sign in to continue")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    var heroSection: some View {
+        ZStack(alignment: .bottomLeading) {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(LinearGradient(colors: [.blue, Color.purple.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(height: 280)
+                .shadow(radius: 8, y: 6)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Divvi")
+                    .font(.largeTitle.bold())
+                    .foregroundStyle(.white)
+                Text("The only solution for shared wallets.")
+                    .font(.headline)
+                    .foregroundStyle(.white.opacity(0.9))
+                Text("Login with the demo user to explore the dashboard.")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.8))
+            }
+            .padding()
         }
     }
 

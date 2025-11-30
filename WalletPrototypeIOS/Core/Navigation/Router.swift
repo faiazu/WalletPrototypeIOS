@@ -18,6 +18,14 @@ final class Router: ObservableObject {
         path.append(.wallet)
     }
 
+    func goToCardSettings() {
+        path.append(.cardSettings)
+    }
+
+    func goToEditUsers() {
+        path.append(.editUsers)
+    }
+
     func pop() {
         _ = path.popLast()
     }
@@ -29,6 +37,8 @@ final class Router: ObservableObject {
 
 enum Route: Hashable {
     case wallet
+    case cardSettings
+    case editUsers
     // Later:
     // case walletDetails(id: String)
     // case transaction(id: String)

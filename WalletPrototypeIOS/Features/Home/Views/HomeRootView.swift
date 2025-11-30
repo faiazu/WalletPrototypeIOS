@@ -31,11 +31,11 @@ struct HomeRootView: View {
                         .padding(.vertical, 4)
                 }
 
-                walletCardSection
-
-                balancesSection
-
-                actionsSection
+                createJoinRow
+                cardCarousel
+                actionRow
+                membersSection
+                debugSection
             }
             .padding()
         }
@@ -65,103 +65,158 @@ private extension HomeRootView {
         }
     }
 
-    var walletCardSection: some View {
+    var createJoinRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                // Placeholder: hook API when available
+            } label: {
+                Label("Create New Card", systemImage: "plus.circle")
+            }
+            .buttonStyle(PrimaryButtonStyle())
+
+            Button {
+                // Placeholder: hook API when available
+            } label: {
+                Label("Join Card", systemImage: "person.badge.plus")
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+    }
+
+    var cardCarousel: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Wallet", systemImage: "wallet.pass")
-                    .font(.headline)
-                Spacer()
-                if let memberCount = viewModel.wallet?.members?.count {
-                    Text("\(memberCount) member\(memberCount == 1 ? "" : "s")")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+            Text(viewModel.wallet?.name ?? "Groceries")
+                .font(.title3.bold())
+            TabView {
+                ForEach(displayCards(), id: \.displayId) { card in
+                    cardHero(card: card)
                 }
             }
+            .frame(height: 200)
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+        }
+    }
 
-            if let wallet = viewModel.wallet {
-                Text(wallet.name ?? "Default wallet")
-                    .font(.title3.weight(.semibold))
+    var actionRow: some View {
+        HStack(spacing: 12) {
+            Button {
+                // Placeholder: hook API when available
+            } label: {
+                Label("Add Money", systemImage: "arrow.down.circle")
             }
+            .buttonStyle(PrimaryButtonStyle())
 
-            Divider()
+            Button {
+                router.goToCardSettings()
+            } label: {
+                Label("Settings", systemImage: "gearshape.fill")
+            }
+            .buttonStyle(SecondaryButtonStyle())
+        }
+    }
 
-            if let card = viewModel.card {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Card")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-                    Text(card.maskedDisplay)
-                        .font(.title3.monospacedDigit())
-                    if let status = card.status {
-                        Text("Status: \(status)")
-                            .font(.footnote)
+    var membersSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Members")
+                .font(.headline)
+
+            ForEach(memberRows(), id: \.id) { member in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(member.name)
+                            .font(.body.weight(.semibold))
+                        Text(member.role)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(member.status)
+                            .font(.caption.bold())
+                            .foregroundStyle(member.status.lowercased() == "active" ? .green : .red)
+                        Text(member.amount)
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-            } else {
-                Text("Card details not available yet.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-
-    var balancesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Balances")
-                .font(.headline)
-
-            HStack(spacing: 12) {
-                balanceTile(title: "Pool", value: viewModel.poolBalanceText)
-                balanceTile(title: "Your equity", value: viewModel.memberEquityText)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
     }
 
-    func balanceTile(title: String, value: String) -> some View {
+    var debugSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
+            Text("Debug / Status")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Text(value)
-                .font(.title3.weight(.semibold))
-                .monospacedDigit()
+            StatusBanner(text: viewModel.errorMessage ?? "Using demo data; API not fully wired.", style: .info)
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    var actionsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button {
-                viewModel.load()
-            } label: {
-                Label("Refresh data", systemImage: "arrow.clockwise")
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled(viewModel.isLoading)
+    func cardHero(card: Card) -> some View {
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(LinearGradient(colors: [.blue, Color.purple.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .shadow(radius: 6, y: 4)
 
-            Button {
-                router.goToWallet()
-            } label: {
-                Label("Open wallet", systemImage: "rectangle.grid.2x2")
-            }
-            .buttonStyle(SecondaryButtonStyle())
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Available Balance")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.8))
+                Text(viewModel.poolBalanceText)
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
 
-            Button(role: .destructive) {
-                viewModel.signOut()
-            } label: {
-                Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
+                Text(card.maskedDisplay)
+                    .font(.body.monospacedDigit())
+                    .foregroundStyle(.white)
+
+                Text(appState.currentUser?.email ?? "Card Holder")
+                    .font(.footnote.bold())
+                    .foregroundStyle(.white)
             }
-            .buttonStyle(.borderless)
-            .padding(.top, 6)
+            .padding(16)
         }
-        .padding(.top, 4)
+        .padding(.horizontal, 4)
+    }
+
+    struct MemberRow: Identifiable {
+        let id = UUID()
+        let name: String
+        let role: String
+        let status: String
+        let amount: String
+    }
+
+    func memberRows() -> [MemberRow] {
+        if let members = viewModel.wallet?.members, !members.isEmpty {
+            return members.map {
+                let amount = viewModel.memberEquityText
+                return MemberRow(
+                    name: $0.user?.email ?? "Member",
+                    role: $0.role ?? "Member",
+                    status: "Active",
+                    amount: amount
+                )
+            }
+        }
+
+        return [
+            MemberRow(name: appState.currentUser?.email ?? "You", role: "Admin", status: "Active", amount: viewModel.memberEquityText),
+            MemberRow(name: "Michael", role: "Member", status: "Active", amount: CurrencyFormatter.string(from: 33.25)),
+            MemberRow(name: "Simon", role: "Member", status: "Active", amount: CurrencyFormatter.string(from: 12.13))
+        ]
+    }
+
+    func displayCards() -> [Card] {
+        if let card = viewModel.card {
+            return [card]
+        }
+        return [
+            Card(id: "placeholder", externalCardId: "placeholder", last4: "8635", status: "ACTIVE", providerName: "Demo", walletId: viewModel.wallet?.id, userId: appState.currentUser?.id)
+        ]
     }
 }
