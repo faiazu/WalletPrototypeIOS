@@ -7,7 +7,11 @@
 
 import Foundation
 
-final class UserService {
+protocol UserServicing {
+    func fetchCurrentUser(authToken: String) async throws -> User
+}
+
+final class UserService: UserServicing {
     static let shared = UserService()
     private init() {}
 
@@ -26,4 +30,3 @@ final class UserService {
         return user
     }
 }
-

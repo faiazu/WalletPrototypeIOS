@@ -17,13 +17,13 @@ final class HomeViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let appState: AppState
-    private let walletService: WalletService
-    private let authService: AuthService
+    private let walletService: WalletServicing
+    private let authService: AuthServicing
 
     init(
         appState: AppState,
-        walletService: WalletService? = nil,
-        authService: AuthService? = nil
+        walletService: WalletServicing? = nil,
+        authService: AuthServicing? = nil
     ) {
         self.appState = appState
         self.walletService = walletService ?? WalletService.shared

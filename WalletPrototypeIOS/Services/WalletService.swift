@@ -7,7 +7,11 @@
 
 import Foundation
 
-final class WalletService {
+protocol WalletServicing {
+    func bootstrap() async throws -> WalletBootstrapResponse
+}
+
+final class WalletService: WalletServicing {
     static let shared = WalletService()
     private init() {}
 

@@ -78,7 +78,7 @@ final class APIClient {
 
     // Initializer, can use different baseURL / session / json stuff if needed
     init(
-        baseURL: URL = URL(string: "http://localhost:3000")!,
+        baseURL: URL = AppConfig.shared.baseURL,
         urlSession: URLSession = .shared,
         jsonEncoder: JSONEncoder = .init(),
         jsonDecoder: JSONDecoder = .init()

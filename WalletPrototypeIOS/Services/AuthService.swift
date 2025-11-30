@@ -7,7 +7,12 @@
 
 import Foundation
 
-final class AuthService {
+protocol AuthServicing {
+    func loginWithGoogle(idToken: String) async throws -> LoginResponse
+    func loginAsChristopher() async throws -> LoginResponse
+}
+
+final class AuthService: AuthServicing {
     static let shared = AuthService()
     private init() {}
 

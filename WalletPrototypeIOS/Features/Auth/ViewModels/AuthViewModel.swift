@@ -14,8 +14,16 @@ final class AuthViewModel: ObservableObject {
     @Published var statusMessage: String?
     @Published var errorMessage: String?
 
-    private let authService = AuthService.shared
-    private let walletService = WalletService.shared
+    private let authService: AuthServicing
+    private let walletService: WalletServicing
+
+    init(
+        authService: AuthServicing? = nil,
+        walletService: WalletServicing? = nil
+    ) {
+        self.authService = authService ?? AuthService.shared
+        self.walletService = walletService ?? WalletService.shared
+    }
     
     func loginAsChristopher(appState: AppState) async {
         guard !isLoading else { return }
