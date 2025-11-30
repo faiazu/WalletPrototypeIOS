@@ -63,6 +63,15 @@ final class AppState: ObservableObject {
         triggerAuthTransition()
     }
 
+    // Replace or insert a card in the cached array.
+    func updateCard(_ updated: Card) {
+        if let id = updated.id, let index = cards.firstIndex(where: { $0.id == id }) {
+            cards[index] = updated
+        } else {
+            cards.insert(updated, at: 0)
+        }
+    }
+
     private func triggerAuthTransition() {
         showAuthTransition = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in

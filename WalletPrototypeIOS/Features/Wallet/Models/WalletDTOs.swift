@@ -35,7 +35,7 @@ struct CardDTO: Codable {
     let id: String?
     let externalCardId: String?
     let last4: String?
-    let status: String?
+    let status: CardStatus?
     let providerName: String?
     let walletId: String?
     let userId: String?
@@ -94,7 +94,7 @@ extension CardDTO {
             id: id,
             externalCardId: externalCardId,
             last4: last4,
-            status: status,
+            status: status ?? .unknown,
             providerName: providerName,
             walletId: walletId,
             userId: userId,

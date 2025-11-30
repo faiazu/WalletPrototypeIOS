@@ -7,10 +7,16 @@
 
 import SwiftUI
 
-/// Placeholder card settings screen. Displays card summary and mock settings actions.
+/// Card settings screen wired to card endpoints; includes debug messaging.
 struct CardSettingsPlaceholderView: View {
     @ObservedObject var appState: AppState
     @EnvironmentObject var router: Router
+    @StateObject private var viewModel: CardSettingsViewModel
+
+    init(appState: AppState) {
+        self.appState = appState
+        _viewModel = StateObject(wrappedValue: CardSettingsViewModel(appState: appState))
+    }
 
     var body: some View {
         ScrollView {
@@ -24,6 +30,9 @@ struct CardSettingsPlaceholderView: View {
         }
         .navigationTitle("Card Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            viewModel.load()
+        }
     }
 }
 
@@ -31,11 +40,11 @@ private extension CardSettingsPlaceholderView {
     var cardSummary: some View {
         CardDisplayView(
             walletName: appState.wallet?.name ?? "Groceries",
-            balanceText: CurrencyFormatter.string(from: appState.balances?.poolDisplay ?? 0),
-            maskedNumber: maskedCard(appState.cards.first?.last4 ?? "7641"),
+            balanceText: CurrencyFormatter.string(from: viewModel.balances?.poolDisplay ?? appState.balances?.poolDisplay ?? 0),
+            maskedNumber: maskedCard(viewModel.card?.last4 ?? appState.cards.first?.last4 ?? "7641"),
             validFrom: "10/25",
             expires: "10/30",
-            holder: displayName(for: appState.cards.first?.user ?? appState.currentUser),
+            holder: displayName(for: viewModel.card?.user ?? appState.currentUser),
             chipImageName: "CardChipImage",
             brandImageName: "MastercardLogo"
         )
@@ -46,42 +55,45 @@ private extension CardSettingsPlaceholderView {
             Text("Card Status")
                 .font(.headline)
             Spacer()
-            Text(cardStatusText)
+            let status = viewModel.card?.status ?? .unknown
+            Text(statusLabel(status))
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(cardStatusColor)
+                .foregroundStyle(statusColor(status))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(cardStatusColor.opacity(0.15))
+                .background(statusColor(status).opacity(0.15))
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        }
-    }
-
-    var cardStatusText: String {
-        appState.cards.first?.status ?? "Active"
-    }
-
-    var cardStatusColor: Color {
-        // Simple mapping; adjust as needed for your statuses
-        switch (appState.cards.first?.status ?? "Active").lowercased() {
-        case "active": return .green
-        case "locked": return .orange
-        case "inactive", "deactivated", "disabled": return .red
-        default: return .secondary
         }
     }
 
     var settingsList: some View {
         VStack(spacing: 12) {
             settingsRow(title: "Change Pin", icon: "lock.rotation")
-            settingsRow(title: "Lock Card", icon: "lock.fill", trailing: AnyView(Toggle("", isOn: .constant(false)).labelsHidden()))
-            settingsRow(title: "Deactivate Card", icon: "xmark.circle.fill", trailing: AnyView(Toggle("", isOn: .constant(true)).labelsHidden()))
+            settingsRow(
+                title: "Lock Card",
+                icon: "lock.fill",
+                trailing: AnyView(Toggle("", isOn: Binding<Bool>(
+                    get: { viewModel.card?.status == .locked },
+                    set: { viewModel.setLocked($0) }
+                )).labelsHidden()),
+                disabled: viewModel.card == nil || viewModel.isLoading
+            )
+            settingsRow(
+                title: "Deactivate Card",
+                icon: "xmark.circle.fill",
+                trailing: AnyView(Toggle("", isOn: Binding<Bool>(
+                    get: { viewModel.card?.status == .canceled },
+                    set: { viewModel.setDeactivated($0) }
+                )).labelsHidden()),
+                disabled: viewModel.card == nil || viewModel.isLoading
+            )
             settingsRow(title: "Edit Users", icon: "person.2.fill", trailing: AnyView(Image(systemName: "chevron.right").foregroundStyle(.secondary))) {
                 router.goToEditUsers()
             }
         }
     }
 
-    func settingsRow(title: String, icon: String, trailing: AnyView? = nil, action: (() -> Void)? = nil) -> some View {
+    func settingsRow(title: String, icon: String, trailing: AnyView? = nil, disabled: Bool = false, action: (() -> Void)? = nil) -> some View {
         Button {
             action?()
         } label: {
@@ -100,6 +112,7 @@ private extension CardSettingsPlaceholderView {
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
+        .disabled(disabled)
     }
 
     var debugSection: some View {
@@ -107,7 +120,12 @@ private extension CardSettingsPlaceholderView {
             Text("Debug / Status")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            StatusBanner(text: "Card settings are placeholders until APIs are ready.", style: .info)
+            if let debug = viewModel.debugMessage {
+                StatusBanner(text: debug, style: .info)
+            }
+            if let error = viewModel.errorMessage {
+                StatusBanner(text: error, style: .error)
+            }
         }
     }
 
@@ -129,10 +147,30 @@ private extension CardSettingsPlaceholderView {
         }
         return "Card Holder"
     }
+
+    func statusLabel(_ status: CardStatus) -> String {
+        switch status {
+        case .active: return "Active"
+        case .locked: return "Locked"
+        case .canceled: return "Canceled"
+        case .suspended: return "Suspended"
+        case .unknown: return "Unknown"
+        }
+    }
+
+    func statusColor(_ status: CardStatus) -> Color {
+        switch status {
+        case .active: return .green
+        case .locked: return .orange
+        case .canceled, .suspended: return .red
+        case .unknown: return .secondary
+        }
+    }
 }
 
 #Preview {
     NavigationStack {
         CardSettingsPlaceholderView(appState: AppState())
+            .environmentObject(Router())
     }
 }

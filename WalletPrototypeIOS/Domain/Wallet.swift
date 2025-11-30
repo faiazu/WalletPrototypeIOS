@@ -28,7 +28,7 @@ struct Card: Codable, Equatable {
     let id: String?
     let externalCardId: String?
     let last4: String?
-    let status: String?
+    let status: CardStatus?
     let providerName: String?
     let walletId: String?
     let userId: String?
@@ -41,6 +41,25 @@ struct Card: Codable, Equatable {
     var maskedDisplay: String {
         guard let last4 else { return "****" }
         return "**** \(last4)"
+    }
+}
+
+enum CardStatus: String, Codable, Equatable {
+    case active = "ACTIVE"
+    case locked = "LOCKED"
+    case canceled = "CANCELED"
+    case suspended = "SUSPENDED"
+    case unknown = "UNKNOWN"
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let raw = try container.decode(String.self).uppercased()
+        self = CardStatus(rawValue: raw) ?? .unknown
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
     }
 }
 
