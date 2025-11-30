@@ -13,17 +13,13 @@ struct AuthRootView: View {
     @StateObject private var viewModel: AuthViewModel = AuthViewModel()
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ZStack {
+            Color(.systemGray6).ignoresSafeArea()
+
+            VStack(spacing: 0) {
                 heroSection
-
-                demoButton
-
-                statusSection
-
-                googleSection
+                contentSection
             }
-            .padding()
             .animation(.default, value: viewModel.isLoading)
         }
     }
@@ -44,25 +40,42 @@ private extension AuthRootView {
     }
 
     var heroSection: some View {
-        ZStack(alignment: .bottomLeading) {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(LinearGradient(colors: [.blue, Color.purple.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                .frame(height: 280)
-                .shadow(radius: 8, y: 6)
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Divvi")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(.white)
-                Text("The only solution for shared wallets.")
-                    .font(.headline)
-                    .foregroundStyle(.white.opacity(0.9))
-                Text("Login with the demo user to explore the dashboard.")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.8))
-            }
-            .padding()
+        ZStack {
+            Color(hex: "1A3EEC")
+                .ignoresSafeArea(edges: .top)
+            Image("OnboardingHero")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 12)
+                .padding(.top, 24)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 460)
+    }
+
+    var contentSection: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Divvi")
+                    .font(.title.bold())
+                Text("The only solution for shared wallets.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            demoButton
+
+            statusSection
+
+            googleSection
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     var demoButton: some View {
@@ -86,7 +99,8 @@ private extension AuthRootView {
                         .tint(.white)
                 }
             }
-            .padding()
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(PrimaryButtonStyle())
