@@ -10,19 +10,20 @@ import GoogleSignInSwift
 
 struct AuthRootView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel: GoogleAuthViewModel = GoogleAuthViewModel()
+    @StateObject private var viewModel: AuthViewModel = AuthViewModel()
 
     var body: some View {
         VStack(spacing: 24) {
-            
             header
-            
-            googleButton
-            
+
+            demoButton
+
             statusSection
-            
+
+            googleSection
         }
         .padding()
+        .animation(.default, value: viewModel.isLoading)
     }
 }
 
@@ -39,21 +40,47 @@ private extension AuthRootView {
                 .foregroundStyle(.secondary)
         }
     }
-    
-    var googleButton: some View {
-        GoogleSignInButton {
-            handleGoogleSignInTap()
+
+    var demoButton: some View {
+        Button(action: handleDemoLoginTap) {
+            HStack(spacing: 12) {
+                Image(systemName: "person.crop.circle.badge.checkmark")
+                    .font(.title3.weight(.semibold))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Login as Christopher Albertson")
+                        .font(.headline)
+                    Text("Local demo account with Synctera onboarding")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if viewModel.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                }
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(height: 50)
-        .padding(.horizontal)
-        .disabled(viewModel.isLoading) // prevent double taps
-        .opacity(viewModel.isLoading ? 0.6 : 1.0)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .disabled(viewModel.isLoading)
+        .opacity(viewModel.isLoading ? 0.9 : 1.0)
     }
     
     var statusSection: some View {
         VStack(spacing: 8) {
             if viewModel.isLoading {
-                ProgressView("Signing in…")
+                ProgressView(viewModel.statusMessage ?? "Signing in...")
+            }
+
+            if let status = viewModel.statusMessage {
+                Text(status)
+                    .foregroundStyle(.secondary)
+                    .font(.footnote)
             }
 
             if let error = viewModel.errorMessage {
@@ -65,12 +92,37 @@ private extension AuthRootView {
             }
         }
     }
+
+    var googleSection: some View {
+        VStack(spacing: 8) {
+            Text("Other sign-in options")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            GoogleSignInButton {
+                handleGoogleSignInTap()
+            }
+            .frame(height: 44)
+            .padding(.horizontal)
+            .disabled(viewModel.isLoading)
+            .opacity(viewModel.isLoading ? 0.35 : 0.6)
+        }
+        .padding(.top, 8)
+    }
 }
 
 // Actions
 private extension AuthRootView {
+    func handleDemoLoginTap() {
+        guard !viewModel.isLoading else { return }
+
+        Task {
+            await viewModel.loginAsChristopher(appState: appState)
+        }
+    }
+
     func handleGoogleSignInTap() {
-        // Don’t start a second sign-in while one is in progress
+        // Don't start a second sign-in while one is in progress
         guard !viewModel.isLoading else { return }
 
         guard let rootVC = RootViewControllerProvider.rootViewController() else {

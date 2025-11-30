@@ -74,6 +74,7 @@ final class APIClient {
     private let urlSession: URLSession
     private let jsonEncoder: JSONEncoder
     private let jsonDecoder: JSONDecoder
+    private var authToken: String?
 
     // Initializer, can use different baseURL / session / json stuff if needed
     init(
@@ -86,6 +87,12 @@ final class APIClient {
         self.urlSession = urlSession
         self.jsonEncoder = jsonEncoder
         self.jsonDecoder = jsonDecoder
+        self.jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+    }
+
+    // Store a token so future requests automatically attach Authorization if not overridden.
+    func setAuthToken(_ token: String?) {
+        authToken = token
     }
 
     // Sends a request that has a JSON body (ex POST /auth/google).
@@ -161,6 +168,9 @@ final class APIClient {
         // Default headers for JSON APIs
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let token = authToken, headers["Authorization"] == nil {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
 
         // Apply any additional headers (ex Authorization)
         headers.forEach { key, value in

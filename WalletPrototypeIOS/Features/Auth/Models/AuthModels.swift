@@ -12,10 +12,10 @@ struct GoogleLoginRequest: Codable {
     let idToken: String
 }
 
-// Response from backend after successful Google login
-struct GoogleLoginResponse: Codable {
-    let user: User       // from Domain/User.swift
-    let token: String    // backend's JWT or session token
+// Response from backend after successful authentication (Google or demo)
+struct LoginResponse: Codable {
+    let user: User        // from Domain/User.swift
+    let token: String     // backend's JWT or session token
+    let personId: String?
 }
-
 
