@@ -17,17 +17,17 @@ final class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let authService: AuthServicing
-    private let walletService: WalletServicing
+    private let userService: UserServicing
 
     init(
         authService: AuthServicing? = nil,
-        walletService: WalletServicing? = nil
+        userService: UserServicing? = nil
     ) {
         self.authService = authService ?? AuthService.shared
-        self.walletService = walletService ?? WalletService.shared
+        self.userService = userService ?? UserService.shared
     }
     
-    /// Primary path: demo login + bootstrap. Keeps the button disabled until both steps finish.
+    /// Primary path: demo login + overview fetch. Keeps the button disabled until both steps finish.
     func loginAsChristopher(appState: AppState) async {
         guard !isLoading else { return }
 
@@ -41,9 +41,9 @@ final class AuthViewModel: ObservableObject {
             APIClient.shared.setAuthToken(loginResponse.token)
 
             statusMessage = "Preparing your wallet..."
-            let bootstrap = try await walletService.bootstrap()
+            let overview = try await userService.fetchOverview()
             appState.applyLogin(response: loginResponse)
-            appState.applyBootstrap(bootstrap)
+            appState.applyOverview(overview)
 
             statusMessage = nil
             state = .loaded
@@ -53,7 +53,7 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    /// Secondary path: Google login retained for now; same bootstrap afterwards.
+    /// Secondary path: Google login retained for now; same overview fetch afterwards.
     func signInWithGoogle(
         presenting viewController: UIViewController,
         appState: AppState
@@ -71,9 +71,9 @@ final class AuthViewModel: ObservableObject {
             APIClient.shared.setAuthToken(response.token)
 
             statusMessage = "Preparing your wallet..."
-            let bootstrap = try await walletService.bootstrap()
+            let overview = try await userService.fetchOverview()
             appState.applyLogin(response: response)
-            appState.applyBootstrap(bootstrap)
+            appState.applyOverview(overview)
 
             statusMessage = nil
             state = .loaded

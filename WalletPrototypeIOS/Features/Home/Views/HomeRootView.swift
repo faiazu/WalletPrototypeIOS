@@ -11,6 +11,8 @@ struct HomeRootView: View {
     @ObservedObject var appState: AppState
     @StateObject private var viewModel: HomeViewModel
     @EnvironmentObject private var router: Router
+    @State private var showCreateSheet = false
+    @State private var showJoinSheet = false
 
     init(appState: AppState) {
         _appState = ObservedObject(wrappedValue: appState)
@@ -23,47 +25,67 @@ struct HomeRootView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    HomeHeaderView(appState: appState)
+                    if viewModel.showOnboarding {
+                        NoWalletsView(
+                            user: appState.currentUser ?? viewModel.overview?.user,
+                            requirements: viewModel.overview?.requirements,
+                            isBusy: viewModel.isLoading,
+                            onCreate: { showCreateSheet = true },
+                            onJoin: { showJoinSheet = true }
+                        )
+                    } else {
+                        HomeHeaderView(appState: appState)
 
-                    if viewModel.isLoading {
-                        ProgressView("Loading your wallet...")
+                        if viewModel.isLoading {
+                            ProgressView("Loading your wallet...")
+                        }
+
+                        if let error = viewModel.errorMessage {
+                            StatusBanner(text: error, style: .error)
+                                .padding(.vertical, 4)
+                        }
+
+                        ActionRowView(
+                            createAction: { /* TODO: wire create card */ },
+                            joinAction: { /* TODO: wire join card */ }
+                        )
+
+                        CardDisplayView(
+                            walletName: viewModel.wallet?.name ?? "Groceries",
+                            balanceText: viewModel.poolBalanceText,
+                            maskedNumber: maskedNumber(from: viewModel.cards.first?.last4),
+                            validFrom: "10/25",
+                            expires: "10/30",
+                            holder: displayName(for: viewModel.cards.first?.user ?? appState.currentUser),
+                            chipImageName: "CardChipImage",
+                            brandImageName: "MastercardLogo"
+                        )
+
+                        SecondaryActionsView(
+                            addMoneyAction: { /* TODO: wire add money */ },
+                            settingsAction: { router.goToCardSettings() }
+                        )
+
+                        MembersSectionView(members: memberRows())
                     }
 
-                    if let error = viewModel.errorMessage {
-                        StatusBanner(text: error, style: .error)
-                            .padding(.vertical, 4)
-                    }
-
-                    ActionRowView(
-                        createAction: { /* TODO: wire create card */ },
-                        joinAction: { /* TODO: wire join card */ }
-                    )
-
-                    CardDisplayView(
-                        walletName: viewModel.wallet?.name ?? "Groceries",
-                        balanceText: viewModel.poolBalanceText,
-                        maskedNumber: maskedNumber(from: viewModel.cards.first?.last4),
-                        validFrom: "10/25",
-                        expires: "10/30",
-                        holder: displayName(for: viewModel.cards.first?.user ?? appState.currentUser),
-                        chipImageName: "CardChipImage",
-                        brandImageName: "MastercardLogo"
-                    )
-
-                    SecondaryActionsView(
-                        addMoneyAction: { /* TODO: wire add money */ },
-                        settingsAction: { router.goToCardSettings() }
-                    )
-
-                    MembersSectionView(members: memberRows())
-
-                    DebugStatusView(message: viewModel.errorMessage ?? "Using demo data; API not fully wired.")
+                    DebugStatusView(message: viewModel.statusMessage ?? viewModel.errorMessage ?? "Using demo data; API not fully wired.")
                 }
                 .padding()
             }
         }
         .onAppear {
             viewModel.loadIfNeeded()
+        }
+        .sheet(isPresented: $showCreateSheet) {
+            WalletEntrySheet(mode: .create, isBusy: viewModel.isLoading) { name in
+                await viewModel.createWallet(named: name)
+            }
+        }
+        .sheet(isPresented: $showJoinSheet) {
+            WalletEntrySheet(mode: .join, isBusy: viewModel.isLoading) { walletId in
+                await viewModel.joinWallet(withId: walletId)
+            }
         }
     }
 }

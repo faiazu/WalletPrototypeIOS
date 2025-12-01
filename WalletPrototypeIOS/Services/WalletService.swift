@@ -8,7 +8,9 @@
 import Foundation
 
 protocol WalletServicing {
-    func bootstrap() async throws -> WalletBootstrapResponse
+    func fetchWalletDetails(walletId: String) async throws -> WalletDetailsResponse
+    func createWallet(name: String) async throws -> Wallet
+    func joinWallet(walletId: String) async throws -> Wallet
 }
 
 final class WalletService: WalletServicing {
@@ -17,12 +19,32 @@ final class WalletService: WalletServicing {
 
     private let apiClient = APIClient.shared
 
-    // Ensures a default wallet, membership, and card; returns dashboard-ready data.
-    func bootstrap() async throws -> WalletBootstrapResponse {
-        let dto: WalletBootstrapDTO = try await apiClient.send(
-            path: "/wallet/bootstrap",
-            method: .post
+    func fetchWalletDetails(walletId: String) async throws -> WalletDetailsResponse {
+        let dto: WalletDetailsDTO = try await apiClient.send(
+            path: "/wallet/\(walletId)",
+            method: .get
         )
         return dto.toDomain()
+    }
+
+    func createWallet(name: String) async throws -> Wallet {
+        struct Request: Codable { let name: String }
+        struct Response: Codable { let wallet: WalletDTO }
+
+        let response: Response = try await apiClient.send(
+            path: "/wallet/create",
+            method: .post,
+            body: Request(name: name)
+        )
+        return response.wallet.toDomain()
+    }
+
+    func joinWallet(walletId: String) async throws -> Wallet {
+        struct Response: Codable { let wallet: WalletDTO }
+        let response: Response = try await apiClient.send(
+            path: "/wallet/\(walletId)/join",
+            method: .post
+        )
+        return response.wallet.toDomain()
     }
 }

@@ -10,35 +10,40 @@ import Combine
 
 @MainActor
 final class HomeViewModel: ObservableObject {
-    // Bootstrap payload the home screen depends on.
     @Published var wallet: Wallet?
     @Published var balances: Balances?
     @Published var cards: [Card] = []
-    // Unified UI state for loading/error.
+    @Published var overview: UserOverview?
+    @Published var showOnboarding = false
     @Published var state: ScreenState = .idle
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var statusMessage: String?
 
     private let appState: AppState
     private let walletService: WalletServicing
+    private let cardService: CardServicing
+    private let userService: UserServicing
     private let authService: AuthServicing
 
     init(
         appState: AppState,
         walletService: WalletServicing? = nil,
+        cardService: CardServicing? = nil,
+        userService: UserServicing? = nil,
         authService: AuthServicing? = nil
     ) {
         self.appState = appState
         self.walletService = walletService ?? WalletService.shared
+        self.cardService = cardService ?? CardService.shared
+        self.userService = userService ?? UserService.shared
         self.authService = authService ?? AuthService.shared
 
         self.wallet = appState.wallet
         self.cards = appState.cards
         self.balances = appState.balances
-    }
-
-    var hasBootstrap: Bool {
-        wallet != nil && balances != nil
+        self.overview = appState.overview
+        self.showOnboarding = !(appState.overview?.hasWallets ?? (appState.wallet != nil))
     }
 
     var poolBalanceText: String {
@@ -60,54 +65,154 @@ final class HomeViewModel: ObservableObject {
         return "—"
     }
 
-    /// Only fetch bootstrap if we don't already have it (avoids duplicate calls on appear).
-    func loadIfNeeded() {
-        guard !hasBootstrap else { return }
-        load()
+    var kycRequired: Bool {
+        overview?.requirements.kycRequired ?? false
     }
 
-    /// Fetch wallet bootstrap (wallet, card, balances). Handles stale tokens gracefully.
-    func load() {
+    func loadIfNeeded() {
         guard !isLoading else { return }
         guard appState.authToken != nil else {
             errorMessage = "Not logged in."
+            state = .error(message: errorMessage ?? "Not logged in.")
             return
         }
 
         Task {
-            isLoading = true
-            errorMessage = nil
-            state = .loading(message: "Loading your wallet...")
-
-            defer { isLoading = false }
-
-            do {
-                let bootstrap = try await walletService.bootstrap()
-                apply(bootstrap)
-                state = .loaded
-
-            } catch {
-                if Task.isCancelled { return }
-                _ = await handleBootstrapError(error)
-            }
+            await loadOverviewAndWallet()
         }
+    }
+
+    func load() {
+        loadIfNeeded()
+    }
+
+    func refresh() {
+        loadIfNeeded()
+    }
+
+    func createWallet(named name: String) async {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            errorMessage = "Wallet name cannot be empty."
+            return
+        }
+
+        if kycRequired {
+            errorMessage = "Complete KYC before creating a wallet."
+            return
+        }
+
+        guard !isLoading else { return }
+
+        statusMessage = "Creating wallet..."
+        errorMessage = nil
+        isLoading = true
+
+        do {
+            let wallet = try await walletService.createWallet(name: trimmed)
+            await loadOverviewAndWallet(focusWalletId: wallet.id)
+            statusMessage = nil
+        } catch {
+            handleActionError(error)
+        }
+
+        isLoading = false
+    }
+
+    func joinWallet(withId walletId: String) async {
+        let trimmed = walletId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            errorMessage = "Wallet ID or invite code required."
+            return
+        }
+
+        guard !isLoading else { return }
+
+        statusMessage = "Joining wallet..."
+        errorMessage = nil
+        isLoading = true
+
+        do {
+            let wallet = try await walletService.joinWallet(walletId: trimmed)
+            await loadOverviewAndWallet(focusWalletId: wallet.id)
+            statusMessage = nil
+        } catch {
+            handleActionError(error)
+        }
+
+        isLoading = false
     }
 
     func signOut() {
         appState.signOut()
     }
+}
 
-    /// Apply new bootstrap data to both VM and shared app state.
-    private func apply(_ bootstrap: WalletBootstrapResponse) {
-        wallet = bootstrap.wallet
-        cards = bootstrap.cards
-        balances = bootstrap.balances
+// MARK: - Private helpers
+private extension HomeViewModel {
+    func loadOverviewAndWallet(focusWalletId: String? = nil) async {
+        guard !Task.isCancelled else { return }
 
-        appState.applyBootstrap(bootstrap)
+        isLoading = true
+        errorMessage = nil
+        state = .loading(message: "Loading your wallet...")
+
+        defer { isLoading = false }
+
+        do {
+            let fetchedOverview = try await userService.fetchOverview()
+            applyOverview(fetchedOverview)
+
+            guard fetchedOverview.hasWallets, let walletId = focusWalletId ?? fetchedOverview.firstWalletId else {
+                showOnboarding = true
+                clearWalletData()
+                state = .loaded
+                return
+            }
+
+            let details = try await walletService.fetchWalletDetails(walletId: walletId)
+            let cardsResponse = try await cardService.listCards(walletId: walletId)
+            applyWallet(details: details, cards: cardsResponse)
+
+            showOnboarding = false
+            state = .loaded
+        } catch {
+            if Task.isCancelled { return }
+            _ = await handleLoadError(error)
+        }
     }
 
-    /// Translate API failures into user-friendly messages and handle recovery paths.
-    private func handleBootstrapError(_ error: Error) async -> Bool {
+    func applyOverview(_ overview: UserOverview) {
+        self.overview = overview
+        appState.applyOverview(overview)
+    }
+
+    func applyWallet(details: WalletDetailsResponse, cards: [Card]) {
+        wallet = details.wallet
+        balances = details.balances
+        self.cards = cards
+        appState.applyWalletContext(wallet: details.wallet, cards: cards, balances: details.balances)
+    }
+
+    func clearWalletData() {
+        wallet = nil
+        balances = nil
+        cards = []
+        appState.wallet = nil
+        appState.cards = []
+        appState.balances = nil
+    }
+
+    func handleActionError(_ error: Error) {
+        statusMessage = nil
+        errorMessage = ErrorMessageMapper.message(for: error)
+
+        if isKycRequired(error) {
+            errorMessage = "Complete KYC before creating a wallet."
+        }
+    }
+
+    func handleLoadError(_ error: Error) async -> Bool {
         if let apiError = error as? APIError {
             switch apiError {
             case let .serverError(status, body):
@@ -118,9 +223,8 @@ final class HomeViewModel: ObservableObject {
                     return false
                 }
 
-                // DB reset / stale token cases: auto re-login and retry bootstrap once.
-                if isUserNotFound(body) || body?.localizedCaseInsensitiveContains("foreign key constraint") == true {
-                    return await retryFreshLoginAndBootstrap()
+                if isUserNotFound(body) {
+                    return await retryFreshLoginAndReload()
                 }
 
                 errorMessage = ErrorMessageMapper.parsedServerMessage(from: body) ?? apiError.localizedDescription
@@ -139,19 +243,12 @@ final class HomeViewModel: ObservableObject {
         return false
     }
 
-    private func isUserNotFound(_ body: String?) -> Bool {
-        guard let body = body?.lowercased() else { return false }
-        return body.contains("usernotfound") || body.contains("user_not_found")
-    }
-
-    private func retryFreshLoginAndBootstrap() async -> Bool {
+    func retryFreshLoginAndReload() async -> Bool {
         do {
             appState.signOut()
             let loginResponse = try await authService.loginAsChristopher()
             appState.applyLogin(response: loginResponse)
-
-            let bootstrap = try await walletService.bootstrap()
-            apply(bootstrap)
+            await loadOverviewAndWallet()
             errorMessage = nil
             state = .loaded
             return true
@@ -163,7 +260,18 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
-    private func formatCurrency(_ amount: Double?) -> String {
-        return CurrencyFormatter.string(from: amount)
+    func isUserNotFound(_ body: String?) -> Bool {
+        guard let body = body?.lowercased() else { return false }
+        return body.contains("usernotfound") || body.contains("user_not_found")
+    }
+
+    func isKycRequired(_ error: Error) -> Bool {
+        guard case let .serverError(_, body) = error as? APIError else { return false }
+        let lowered = body?.lowercased() ?? ""
+        return lowered.contains("kycrequired") || lowered.contains("kyc_required")
+    }
+
+    func formatCurrency(_ amount: Double?) -> String {
+        CurrencyFormatter.string(from: amount)
     }
 }

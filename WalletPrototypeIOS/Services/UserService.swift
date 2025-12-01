@@ -9,6 +9,7 @@ import Foundation
 
 protocol UserServicing {
     func fetchCurrentUser(authToken: String) async throws -> User
+    func fetchOverview() async throws -> UserOverview
 }
 
 final class UserService: UserServicing {
@@ -28,5 +29,12 @@ final class UserService: UserServicing {
         )
         
         return user
+    }
+
+    func fetchOverview() async throws -> UserOverview {
+        try await apiClient.send(
+            path: "/user/overview",
+            method: .get
+        )
     }
 }

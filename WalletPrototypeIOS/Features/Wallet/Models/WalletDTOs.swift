@@ -52,6 +52,16 @@ struct MemberEquityDTO: Codable {
     let balance: Double
 }
 
+struct WalletDetailsDTO: Codable {
+    let wallet: WalletDTO
+    let balances: BalancesDTO?
+}
+
+struct WalletDetailsResponse {
+    let wallet: Wallet
+    let balances: Balances?
+}
+
 // Mapping to domain models
 extension WalletBootstrapDTO {
     func toDomain() -> WalletBootstrapResponse {
@@ -115,5 +125,14 @@ extension BalancesDTO {
 extension MemberEquityDTO {
     func toDomain() -> MemberEquity {
         MemberEquity(userId: userId, balance: balance)
+    }
+}
+
+extension WalletDetailsDTO {
+    func toDomain() -> WalletDetailsResponse {
+        WalletDetailsResponse(
+            wallet: wallet.toDomain(),
+            balances: balances?.toDomain()
+        )
     }
 }

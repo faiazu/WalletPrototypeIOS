@@ -13,6 +13,7 @@ final class AppState: ObservableObject {
     @Published var currentUser: User?
     @Published var authToken: String?
     @Published var personId: String?
+    @Published var overview: UserOverview?
     @Published var wallet: Wallet?
     @Published var cards: [Card] = []
     @Published var balances: Balances?
@@ -44,16 +45,26 @@ final class AppState: ObservableObject {
         triggerAuthTransition()
     }
 
-    func applyBootstrap(_ bootstrap: WalletBootstrapResponse) {
-        wallet = bootstrap.wallet
-        cards = bootstrap.cards
-        balances = bootstrap.balances
+    func applyOverview(_ overview: UserOverview) {
+        self.overview = overview
+        currentUser = overview.user
+        if let token = authToken {
+            let snapshot = SessionSnapshot(user: overview.user, token: token, personId: personId)
+            sessionStore.save(snapshot: snapshot)
+        }
+    }
+
+    func applyWalletContext(wallet: Wallet, cards: [Card], balances: Balances?) {
+        self.wallet = wallet
+        self.cards = cards
+        self.balances = balances
     }
     
     func signOut() {
         currentUser = nil
         authToken = nil
         personId = nil
+        overview = nil
         wallet = nil
         cards = []
         balances = nil
