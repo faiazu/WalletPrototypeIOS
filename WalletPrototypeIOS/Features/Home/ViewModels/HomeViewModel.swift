@@ -159,6 +159,31 @@ final class HomeViewModel: ObservableObject {
         isLoading = false
     }
 
+    func createCard(nickname: String?) async {
+        guard let walletId = selectedWalletId ?? wallet?.id else {
+            errorMessage = "Select a wallet before creating a card."
+            return
+        }
+
+        guard !isLoading else { return }
+
+        statusMessage = "Issuing card..."
+        errorMessage = nil
+        isLoading = true
+
+        do {
+            let trimmed = nickname?.trimmingCharacters(in: .whitespacesAndNewlines)
+            _ = try await cardService.createCard(walletId: walletId, nickname: trimmed)
+            statusMessage = "Refreshing cards..."
+            await loadOverviewAndWallet(focusWalletId: walletId)
+            statusMessage = "Card created."
+        } catch {
+            handleActionError(error)
+        }
+
+        isLoading = false
+    }
+
     func signOut() {
         appState.signOut()
     }
@@ -231,7 +256,7 @@ private extension HomeViewModel {
         errorMessage = ErrorMessageMapper.message(for: error)
 
         if isKycRequired(error) {
-            errorMessage = "Complete KYC before creating a wallet."
+            errorMessage = "Complete KYC before continuing."
         }
     }
 

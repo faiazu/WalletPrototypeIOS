@@ -28,6 +28,7 @@ struct Card: Codable, Equatable {
     let id: String?
     let externalCardId: String?
     let last4: String?
+    let nickname: String?
     let status: CardStatus?
     let providerName: String?
     let walletId: String?

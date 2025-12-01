@@ -88,7 +88,7 @@ private extension DashboardPlaceholderView {
         HStack(spacing: 12) {
             actionChip(title: "Add money", icon: "plus.circle")
             actionChip(title: "Settings", icon: "gearshape.fill")
-            actionChip(title: "Create New Card", icon: "creditcard.fill")
+            actionChip(title: "Create Card", icon: "creditcard.fill")
         }
     }
 

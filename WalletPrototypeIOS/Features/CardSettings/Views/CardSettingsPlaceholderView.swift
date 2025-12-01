@@ -39,7 +39,9 @@ struct CardSettingsPlaceholderView: View {
 private extension CardSettingsPlaceholderView {
     var cardSummary: some View {
         CardDisplayView(
-            walletName: appState.wallet?.name ?? "Groceries",
+            cardTitle: viewModel.card?.nickname?.isEmpty == false
+                ? (viewModel.card?.nickname ?? "Card")
+                : (appState.wallet?.name ?? "Groceries"),
             balanceText: CurrencyFormatter.string(from: viewModel.balances?.poolDisplay ?? appState.balances?.poolDisplay ?? 0),
             maskedNumber: maskedCard(viewModel.card?.last4 ?? appState.cards.first?.last4 ?? "7641"),
             validFrom: "10/25",

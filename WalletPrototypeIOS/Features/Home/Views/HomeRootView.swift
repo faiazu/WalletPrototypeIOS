@@ -13,6 +13,7 @@ struct HomeRootView: View {
     @EnvironmentObject private var router: Router
     @State private var showCreateSheet = false
     @State private var showJoinSheet = false
+    @State private var showCreateCardSheet = false
 
     init(appState: AppState) {
         _appState = ObservedObject(wrappedValue: appState)
@@ -54,20 +55,24 @@ struct HomeRootView: View {
                         }
 
                         ActionRowView(
-                            createAction: { /* TODO: wire actual card creation */ },
+                            createAction: { showCreateCardSheet = true },
                             joinAction: { showJoinSheet = true }
                         )
 
-                        CardDisplayView(
-                            walletName: viewModel.wallet?.name ?? "Groceries",
-                            balanceText: viewModel.poolBalanceText,
-                            maskedNumber: maskedNumber(from: viewModel.cards.first?.last4),
-                            validFrom: "10/25",
-                            expires: "10/30",
-                            holder: displayName(for: viewModel.cards.first?.user ?? appState.currentUser),
-                            chipImageName: "CardChipImage",
-                            brandImageName: "MastercardLogo"
-                        )
+                        if !viewModel.cards.isEmpty {
+                            CardCarouselView(
+                                cards: viewModel.cards,
+                                walletName: viewModel.wallet?.name,
+                                balanceText: viewModel.poolBalanceText,
+                                chipImageName: "CardChipImage",
+                                brandImageName: "MastercardLogo",
+                                holderForCard: { card in
+                                    displayName(for: card.user ?? appState.currentUser)
+                                }
+                            )
+                        } else {
+                            NoCardPlaceholderView()
+                        }
 
                         SecondaryActionsView(
                             addMoneyAction: { /* TODO: wire add money */ },
@@ -93,6 +98,11 @@ struct HomeRootView: View {
         .sheet(isPresented: $showJoinSheet) {
             WalletEntrySheet(mode: .join, isBusy: viewModel.isLoading) { walletId in
                 await viewModel.joinWallet(withId: walletId)
+            }
+        }
+        .sheet(isPresented: $showCreateCardSheet) {
+            CardNicknameSheet(isBusy: viewModel.isLoading) { nickname in
+                await viewModel.createCard(nickname: nickname)
             }
         }
     }
