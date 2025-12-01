@@ -29,7 +29,7 @@ struct ActionRowView: View {
                 HStack(spacing: 8) {
                     Text("🏇")
                         .font(.system(size: 24))
-                    Text("Join Card")
+                    Text("Join Wallet")
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)

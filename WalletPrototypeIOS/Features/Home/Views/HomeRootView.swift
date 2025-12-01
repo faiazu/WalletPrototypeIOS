@@ -35,6 +35,14 @@ struct HomeRootView: View {
                         )
                     } else {
                         HomeHeaderView(appState: appState)
+                        
+                        WalletPickerView(
+                            title: viewModel.selectedWalletName ?? viewModel.wallet?.name ?? "Select Wallet",
+                            wallets: viewModel.wallets,
+                            selectedWalletId: viewModel.selectedWalletId,
+                            onSelect: { id in viewModel.selectWallet(id: id) },
+                            onCreate: { showCreateSheet = true }
+                        )
 
                         if viewModel.isLoading {
                             ProgressView("Loading your wallet...")
@@ -46,8 +54,8 @@ struct HomeRootView: View {
                         }
 
                         ActionRowView(
-                            createAction: { /* TODO: wire create card */ },
-                            joinAction: { /* TODO: wire join card */ }
+                            createAction: { /* TODO: wire actual card creation */ },
+                            joinAction: { showJoinSheet = true }
                         )
 
                         CardDisplayView(

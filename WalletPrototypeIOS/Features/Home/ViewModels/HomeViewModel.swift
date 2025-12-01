@@ -14,6 +14,8 @@ final class HomeViewModel: ObservableObject {
     @Published var balances: Balances?
     @Published var cards: [Card] = []
     @Published var overview: UserOverview?
+    @Published var wallets: [UserOverview.WalletSummary] = []
+    @Published var selectedWalletId: String?
     @Published var showOnboarding = false
     @Published var state: ScreenState = .idle
     @Published var isLoading = false
@@ -43,6 +45,8 @@ final class HomeViewModel: ObservableObject {
         self.cards = appState.cards
         self.balances = appState.balances
         self.overview = appState.overview
+        self.wallets = appState.overview?.wallets ?? []
+        self.selectedWalletId = appState.wallet?.id ?? appState.overview?.firstWalletId
         self.showOnboarding = !(appState.overview?.hasWallets ?? (appState.wallet != nil))
     }
 
@@ -69,6 +73,10 @@ final class HomeViewModel: ObservableObject {
         overview?.requirements.kycRequired ?? false
     }
 
+    var selectedWalletName: String? {
+        wallets.first(where: { $0.id == selectedWalletId })?.name
+    }
+
     func loadIfNeeded() {
         guard !isLoading else { return }
         guard appState.authToken != nil else {
@@ -88,6 +96,14 @@ final class HomeViewModel: ObservableObject {
 
     func refresh() {
         loadIfNeeded()
+    }
+
+    func selectWallet(id: String) {
+        guard id != selectedWalletId else { return }
+        selectedWalletId = id
+        Task {
+            await loadOverviewAndWallet(focusWalletId: id)
+        }
     }
 
     func createWallet(named name: String) async {
@@ -161,9 +177,13 @@ private extension HomeViewModel {
 
         do {
             let fetchedOverview = try await userService.fetchOverview()
-            applyOverview(fetchedOverview)
+            let resolvedWalletId = resolveSelectedWalletId(
+                overview: fetchedOverview,
+                focusWalletId: focusWalletId
+            )
+            applyOverview(fetchedOverview, selectedId: resolvedWalletId)
 
-            guard fetchedOverview.hasWallets, let walletId = focusWalletId ?? fetchedOverview.firstWalletId else {
+            guard fetchedOverview.hasWallets, let walletId = resolvedWalletId else {
                 showOnboarding = true
                 clearWalletData()
                 state = .loaded
@@ -182,8 +202,10 @@ private extension HomeViewModel {
         }
     }
 
-    func applyOverview(_ overview: UserOverview) {
+    func applyOverview(_ overview: UserOverview, selectedId: String?) {
         self.overview = overview
+        wallets = overview.wallets
+        selectedWalletId = selectedId
         appState.applyOverview(overview)
     }
 
@@ -198,6 +220,7 @@ private extension HomeViewModel {
         wallet = nil
         balances = nil
         cards = []
+        selectedWalletId = nil
         appState.wallet = nil
         appState.cards = []
         appState.balances = nil
@@ -269,6 +292,20 @@ private extension HomeViewModel {
         guard case let .serverError(_, body) = error as? APIError else { return false }
         let lowered = body?.lowercased() ?? ""
         return lowered.contains("kycrequired") || lowered.contains("kyc_required")
+    }
+
+    func resolveSelectedWalletId(overview: UserOverview, focusWalletId: String?) -> String? {
+        let availableIds = overview.wallets.map { $0.id }
+
+        if let focus = focusWalletId, availableIds.contains(focus) {
+            return focus
+        }
+
+        if let current = selectedWalletId, availableIds.contains(current) {
+            return current
+        }
+
+        return overview.firstWalletId
     }
 
     func formatCurrency(_ amount: Double?) -> String {
