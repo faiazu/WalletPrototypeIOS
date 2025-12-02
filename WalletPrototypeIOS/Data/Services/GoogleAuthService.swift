@@ -9,8 +9,7 @@ import Foundation
 import UIKit
 import GoogleSignIn
 
-// Handles Google Sign-in and returns the Google ID Token
-// Send this ID Token to backend later
+/// Handles Google Sign-in and returns the Google ID Token.
 @MainActor
 final class GoogleAuthService {
     
@@ -53,4 +52,3 @@ final class GoogleAuthService {
         GIDSignIn.sharedInstance.signOut()
     }
 }
-

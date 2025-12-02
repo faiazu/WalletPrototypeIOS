@@ -8,6 +8,7 @@
 import Combine
 import UIKit
 
+/// Handles authentication flows and initial overview fetch for the Auth screen.
 @MainActor
 final class AuthViewModel: ObservableObject {
     // Standardized loading/error status for the screen.

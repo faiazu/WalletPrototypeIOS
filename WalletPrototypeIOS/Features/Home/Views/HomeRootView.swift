@@ -14,6 +14,7 @@ struct HomeRootView: View {
     @State private var showCreateSheet = false
     @State private var showJoinSheet = false
     @State private var showCreateCardSheet = false
+    @State private var selectedCardId: String?
 
     init(appState: AppState) {
         _appState = ObservedObject(wrappedValue: appState)
@@ -68,7 +69,8 @@ struct HomeRootView: View {
                                 brandImageName: "MastercardLogo",
                                 holderForCard: { card in
                                     displayName(for: card.user ?? appState.currentUser)
-                                }
+                                },
+                                selectedCardId: $selectedCardId
                             )
                         } else {
                             NoCardPlaceholderView()
@@ -76,7 +78,10 @@ struct HomeRootView: View {
 
                         SecondaryActionsView(
                             addMoneyAction: { /* TODO: wire add money */ },
-                            settingsAction: { router.goToCardSettings() }
+                            settingsAction: {
+                                bringSelectedCardToFront()
+                                router.goToCardSettings()
+                            }
                         )
 
                         MembersSectionView(members: memberRows())
@@ -89,6 +94,7 @@ struct HomeRootView: View {
         }
         .onAppear {
             viewModel.loadIfNeeded()
+            selectedCardId = selectedCardId ?? appState.cards.first?.displayId ?? viewModel.cards.first?.displayId
         }
         .sheet(isPresented: $showCreateSheet) {
             WalletEntrySheet(mode: .create, isBusy: viewModel.isLoading) { name in
@@ -104,6 +110,9 @@ struct HomeRootView: View {
             CardNicknameSheet(isBusy: viewModel.isLoading) { nickname in
                 await viewModel.createCard(nickname: nickname)
             }
+        }
+        .onChange(of: viewModel.cards) { _ in
+            selectedCardId = selectedCardId ?? viewModel.cards.first?.displayId
         }
     }
 }
@@ -152,5 +161,18 @@ private extension HomeRootView {
             return String(base)
         }
         return "You"
+    }
+
+    /// Ensures the currently selected card is first before navigating to settings.
+    func bringSelectedCardToFront() {
+        guard let selectedId = selectedCardId,
+              let index = viewModel.cards.firstIndex(where: { $0.displayId == selectedId }) else {
+            return
+        }
+        var cards = viewModel.cards
+        let card = cards.remove(at: index)
+        cards.insert(card, at: 0)
+        viewModel.cards = cards
+        appState.cards = cards
     }
 }

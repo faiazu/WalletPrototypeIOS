@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+/// Orchestrates loading the overview, active wallet, balances, and cards for the Home screen.
 @MainActor
 final class HomeViewModel: ObservableObject {
     @Published var wallet: Wallet?

@@ -18,21 +18,21 @@ struct StatusBanner: View {
     let style: Style
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
+        HStack(alignment: .center, spacing: StyleGuide.Spacing.md) {
             Image(systemName: iconName)
                 .font(.headline)
                 .foregroundStyle(iconColor)
 
             Text(text)
-                .font(.footnote)
+                .font(StyleGuide.Fonts.caption)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
 
             Spacer(minLength: 0)
         }
-        .padding(12)
+        .padding(StyleGuide.Spacing.md)
         .background(backgroundColor)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: StyleGuide.Radius.md, style: .continuous))
     }
 
     private var backgroundColor: Color {

@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+import CoreGraphics
 
+/// Simple reusable card display that shows balance, masked number, and holder details.
 struct CardDisplayView: View {
     let cardTitle: String
     let balanceText: String
@@ -20,15 +22,15 @@ struct CardDisplayView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(cardTitle)
-                .font(.system(size: 32, weight: .bold))
+                .font(StyleGuide.Fonts.heading(32))
 
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(LinearGradient(colors: [Color.blue, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                RoundedRectangle(cornerRadius: StyleGuide.Radius.lg, style: .continuous)
+                    .fill(StyleGuide.Colors.cardGradient)
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Available Balance")
-                        .font(.footnote)
+                        .font(StyleGuide.Fonts.caption)
                         .foregroundStyle(.white.opacity(0.9))
 
                     Text(balanceText)
@@ -60,7 +62,7 @@ struct CardDisplayView: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Card Holder")
-                            .font(.footnote)
+                            .font(StyleGuide.Fonts.caption)
                             .foregroundStyle(.white.opacity(0.8))
                         Text(holder)
                             .font(.headline.bold())
@@ -92,7 +94,7 @@ struct CardDisplayView: View {
                 }
             }
             .frame(height: 240)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: StyleGuide.Radius.lg, style: .continuous))
             .shadow(radius: 6, y: 4)
         }
     }

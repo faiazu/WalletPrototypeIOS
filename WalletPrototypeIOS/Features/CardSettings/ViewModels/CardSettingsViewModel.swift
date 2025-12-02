@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+/// Handles card detail loading and status updates for the Card Settings screen.
 @MainActor
 final class CardSettingsViewModel: ObservableObject {
     @Published var card: Card?

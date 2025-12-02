@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Backend bootstrap payload for the user's dashboard/home experience.
 struct UserOverview: Codable, Equatable {
     struct Requirements: Codable, Equatable {
         let kycRequired: Bool

@@ -15,52 +15,40 @@ struct CardCarouselView: View {
     let chipImageName: String
     let brandImageName: String
     let holderForCard: (Card) -> String
-
-    @State private var selection: String?
+    @Binding var selectedCardId: String?
 
     var body: some View {
         GeometryReader { geo in
             let horizontalInset: CGFloat = 16
-            let cardWidth = geo.size.width - (horizontalInset * 2) // full width with side padding
+            let cardWidth = geo.size.width * 0.9 // slight gap between cards
 
-            ZStack(alignment: .bottom) {
-                TabView(selection: $selection) {
-                    ForEach(cards, id: \.displayId) { card in
-                        CardDisplayView(
-                            cardTitle: title(for: card),
-                            balanceText: balanceText,
-                            maskedNumber: maskedNumber(for: card.last4),
-                            validFrom: "10/25",
-                            expires: "10/30",
-                            holder: holderForCard(card),
-                            chipImageName: chipImageName,
-                            brandImageName: brandImageName
-                        )
-                        .frame(width: cardWidth)
-                        .tag(card.displayId)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .automatic))
-                .animation(.easeInOut, value: selection)
-                .frame(height: 320)
-                .padding(.horizontal, horizontalInset)
+            let selectionBinding = Binding<String?>(
+                get: { selectedCardId ?? cards.first?.displayId },
+                set: { newValue in selectedCardId = newValue }
+            )
 
-                if cards.count > 1 {
-                    HStack(spacing: 6) {
-                        ForEach(cards, id: \.displayId) { card in
-                            let isSelected = card.displayId == (selection ?? cards.first?.displayId)
-                            Capsule()
-                                .fill(Color.primary.opacity(isSelected ? 0.8 : 0.2))
-                                .frame(width: isSelected ? 18 : 8, height: 6)
-                                .animation(.easeInOut(duration: 0.2), value: isSelected)
-                        }
-                    }
-                    .padding(.bottom, 2)
+            TabView(selection: selectionBinding) {
+                ForEach(cards, id: \.displayId) { card in
+                    CardDisplayView(
+                        cardTitle: title(for: card),
+                        balanceText: balanceText,
+                        maskedNumber: maskedNumber(for: card.last4),
+                        validFrom: "10/25",
+                        expires: "10/30",
+                        holder: holderForCard(card),
+                        chipImageName: chipImageName,
+                        brandImageName: brandImageName
+                    )
+                    .frame(width: cardWidth)
+                    .tag(card.displayId)
                 }
             }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            .frame(height: 320)
+            .padding(.horizontal, horizontalInset)
         }
         .frame(height: 340)
-        .onAppear { selection = selection ?? cards.first?.displayId }
+        .onAppear { selectedCardId = selectedCardId ?? cards.first?.displayId }
     }
 }
 
@@ -91,6 +79,7 @@ private extension CardCarouselView {
         balanceText: "$0.00",
         chipImageName: "CardChipImage",
         brandImageName: "MastercardLogo",
-        holderForCard: { _ in "Cardholder Name" }
+        holderForCard: { _ in "Cardholder Name" },
+        selectedCardId: .constant(nil)
     )
 }

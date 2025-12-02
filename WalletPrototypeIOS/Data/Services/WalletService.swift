@@ -7,12 +7,14 @@
 
 import Foundation
 
+/// Wallet API surface.
 protocol WalletServicing {
     func fetchWalletDetails(walletId: String) async throws -> WalletDetailsResponse
     func createWallet(name: String) async throws -> Wallet
     func joinWallet(walletId: String) async throws -> Wallet
 }
 
+/// Concrete implementation for wallet APIs (details, create, join).
 final class WalletService: WalletServicing {
     static let shared = WalletService()
     private init() {}

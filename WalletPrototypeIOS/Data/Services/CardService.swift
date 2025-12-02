@@ -16,6 +16,7 @@ struct CardStatusUpdateRequest: Codable {
     let status: CardStatus
 }
 
+/// Card API surface.
 protocol CardServicing {
     func createCard(walletId: String, nickname: String?) async throws -> Card
     func updateNickname(cardId: String, nickname: String) async throws -> Card
@@ -24,6 +25,7 @@ protocol CardServicing {
     func listCards(walletId: String) async throws -> [Card]
 }
 
+/// Concrete implementation for card APIs (list, create, update status/nickname).
 final class CardService: CardServicing {
     static let shared = CardService()
     private init() {}

@@ -7,11 +7,13 @@
 
 import Foundation
 
+/// User-facing API surface.
 protocol UserServicing {
     func fetchCurrentUser(authToken: String) async throws -> User
     func fetchOverview() async throws -> UserOverview
 }
 
+/// Concrete implementation for user APIs (profile, overview).
 final class UserService: UserServicing {
     static let shared = UserService()
     private init() {}

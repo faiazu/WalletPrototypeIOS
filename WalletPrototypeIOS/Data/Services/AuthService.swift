@@ -7,11 +7,13 @@
 
 import Foundation
 
+/// Auth API surface.
 protocol AuthServicing {
     func loginWithGoogle(idToken: String) async throws -> LoginResponse
     func loginAsChristopher() async throws -> LoginResponse
 }
 
+/// Concrete implementation for auth APIs.
 final class AuthService: AuthServicing {
     static let shared = AuthService()
     private init() {}
