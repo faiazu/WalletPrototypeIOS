@@ -1,5 +1,5 @@
 //
-//  Color+Hex.swift
+//  ColorHex.swift
 //  WalletPrototypeIOS
 //
 //  Created by Faiaz on 2025-12-02.
